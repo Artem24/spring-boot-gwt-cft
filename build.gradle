@@ -1,0 +1,120 @@
+buildscript {
+    ext {
+        springBootVersion = '1.4.1.RELEASE'
+    }
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+        classpath 'de.richsource.gradle.plugins:gwt-gradle-plugin:0.6'
+    }
+}
+
+plugins {
+    id 'java'
+    id 'com.github.ben-manes.versions' version '0.13.0'
+}
+apply plugin: 'spring-boot'
+apply plugin: 'gwt'
+
+gwt {
+	gwtVersion='2.7.0'
+
+	modules 'ru.icm.cft.SpringBootGwt'
+	devModules 'ru.icm.cft.SpringBootGwt'
+	
+	maxHeapSize = "1024M"
+	
+	superDev {
+		noPrecompile=true
+	}
+        
+}
+
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+    jcenter()
+    mavenLocal()
+}
+
+sourceSets {
+    main.java.srcDir "src/main/java"
+    main.resources.srcDir "src/main/resources"
+    test.java.srcDir "src/test/java"
+    test.resources.srcDir "src/test/resources"
+}
+
+dependencies {
+    compileOnly 'com.google.gwt:gwt-user:2.7.0',
+            'com.google.gwt:gwt-dev:2.7.0',
+            'org.fusesource.restygwt:restygwt:2.2.0',
+            'org.springframework.boot:spring-boot-configuration-processor'
+
+    compile 'org.springframework.boot:spring-boot-starter-data-jpa',
+            'org.springframework.boot:spring-boot-starter-data-rest',
+            'org.springframework.boot:spring-boot-starter-web',
+            'javax.ws.rs:javax.ws.rs-api:2.0.1'
+
+    runtime files('libs/ojdbc7.jar'),
+            'com.h2database:h2'
+
+    testCompile 'org.springframework.boot:spring-boot-starter-test'
+
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '3.1'
+}
+
+task compileGwt4Jar(dependsOn: classes, type: JavaExec) {
+    ext.buildDir = "${project.buildDir}/gwt"
+    ext.extraDir = "${project.buildDir}/extra"
+
+    inputs.source sourceSets.main.java.srcDirs
+    inputs.dir sourceSets.main.output.resourcesDir
+    outputs.dir buildDir
+
+    doFirst {
+        file(buildDir).mkdirs()
+    }
+
+    main = 'com.google.gwt.dev.Compiler'
+
+    classpath {
+        [
+                sourceSets.main.java.srcDirs,           // Java source
+                sourceSets.main.output.resourcesDir,    // Generated resources
+                sourceSets.main.output.classesDir,      // Generated classes
+                sourceSets.main.compileClasspath,       // Deps
+        ]
+    }
+
+    args = [
+            'ru.icm.cft.SpringBootGwt',
+            '-war', buildDir,
+            '-logLevel', 'INFO',
+            '-localWorkers', '4',
+            '-compileReport',
+            '-extra', extraDir,
+            '-style', 'OBF',
+            '-optimize', '7' // 0=none, 9=max
+    ]
+
+    maxHeapSize = '512M'
+}
+
+compileJava.dependsOn(processResources)
+
+jar.dependsOn compileGwt4Jar
+jar {
+    baseName = 'spring-boot-gwt'
+    version = '1.0.0'
+
+    into('static') {
+        from compileGwt4Jar.buildDir
+    }
+}

@@ -1,0 +1,10 @@
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'
+             xmlns:c='urn:import:com.google.gwt.user.cellview.client'>
+    <g:HTMLPanel>
+        Country: <g:ListBox ui:field="countryLB" visibleItemCount="1"/>
+        City: <g:ListBox ui:field="cityLB" visibleItemCount="1"/>
+        <c:CellTable ui:field="unitCellTable"/>
+
+    </g:HTMLPanel>
+</ui:UiBinder>
